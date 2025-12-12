@@ -130,6 +130,10 @@ class Extractor(PreTrainedModel):
         elif config.counting_layer == "count_lstm_v2":
             self.count_embed = CountLSTMv2(hidden_size=self.hidden_size)
 
+        # LoRA adapter state
+        self._lora_layers = {}
+        self._adapter_config = None
+
         self._print_config(config)
 
     def _print_config(self, config):
@@ -503,7 +507,17 @@ class Extractor(PreTrainedModel):
 
     @classmethod
     def from_pretrained(cls, repo_or_dir: str, **kwargs):
-        """Load model from Hugging Face Hub or local directory."""
+        """
+        Load model from Hugging Face Hub or local directory.
+        
+        To use a LoRA adapter:
+            1. Load the base model first
+            2. Then load the adapter using model.load_adapter()
+        
+        Example:
+            model = Extractor.from_pretrained("base-model-name")
+            model.load_adapter("path/to/adapter")
+        """
         from huggingface_hub import hf_hub_download
 
         def download_or_local(repo, filename):
@@ -544,8 +558,92 @@ class Extractor(PreTrainedModel):
         model.load_state_dict(state_dict)
         return model
 
-    def save_pretrained(self, save_directory: str, **kwargs):
-        """Save model to directory."""
+    def load_adapter(self, adapter_path: str) -> 'Extractor':
+        """
+        Load a LoRA adapter onto this model.
+        
+        If an adapter is already loaded, it will be unloaded first.
+        
+        Args:
+            adapter_path: Path to adapter directory
+            
+        Returns:
+            self for method chaining
+            
+        Example:
+            model.load_adapter("./legal_adapter")
+            results = model.extract_entities(text, entities)
+        """
+        from gliner2.training.lora import load_lora_adapter, LoRAAdapterConfig
+        
+        # Load adapter config
+        config = LoRAAdapterConfig.load(adapter_path)
+        
+        self._lora_layers = load_lora_adapter(self, adapter_path, auto_unload=True)
+        self._adapter_config = config
+        return self
+    
+    def unload_adapter(self) -> 'Extractor':
+        """
+        Unload current LoRA adapter, restoring base model.
+        
+        Returns:
+            self for method chaining
+        """
+        from gliner2.training.lora import unload_lora_adapter
+        
+        if self._lora_layers:
+            unload_lora_adapter(self)
+            self._lora_layers = {}
+            self._adapter_config = None
+        return self
+    
+    def save_adapter(self, save_path: str) -> None:
+        """
+        Save only the LoRA adapter (not full model).
+        
+        Args:
+            save_path: Directory to save adapter
+            
+        Raises:
+            ValueError: If no adapter is loaded
+        """
+        if not self._lora_layers:
+            raise ValueError("No adapter loaded. Use save_pretrained for full model.")
+        
+        from gliner2.training.lora import save_lora_adapter
+        save_lora_adapter(self, save_path)
+    
+    @property
+    def has_adapter(self) -> bool:
+        """Check if an adapter is currently loaded."""
+        return bool(self._lora_layers)
+    
+    @property
+    def adapter_config(self):
+        """Get config of loaded adapter, or None."""
+        return self._adapter_config
+    
+    def save_pretrained(
+        self, 
+        save_directory: str,
+        save_adapter_only: bool = False,
+        **kwargs
+    ):
+        """
+        Save model to directory.
+        
+        Args:
+            save_directory: Where to save
+            save_adapter_only: If True and adapter loaded, save only adapter
+        """
+        if save_adapter_only:
+            if not self._lora_layers:
+                raise ValueError("save_adapter_only=True but no adapter loaded")
+            self.save_adapter(save_directory)
+            return
+        
+        # Original save logic
         os.makedirs(save_directory, exist_ok=True)
         self.config.save_pretrained(save_directory)
 

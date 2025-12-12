@@ -210,6 +210,7 @@ class TrainingConfig:
     lora_alpha: float = 16.0
     lora_dropout: float = 0.0
     lora_target_modules: List[str] = field(default_factory=lambda: ["query", "key", "value"])
+    save_adapter_only: bool = True  # Only applies when use_lora=True
 
     def __post_init__(self):
         if self.fp16 and self.bf16:
@@ -624,6 +625,9 @@ class GLiNER2Trainer:
             model=self.model,
             config=lora_config,
         )
+        
+        # Sync model's _lora_layers attribute
+        self.model._lora_layers = self.lora_layers
         
         # Print LoRA information
         if self.is_main_process:
@@ -1219,60 +1223,82 @@ class GLiNER2Trainer:
         checkpoint_dir = self.checkpoints_dir / name
         checkpoint_dir.mkdir(exist_ok=True)
         
-        # If using LoRA, merge weights before saving
-        # Checkpoints always contain merged weights (as specified)
-        lora_was_merged = False
-        if self.config.use_lora and self.lora_layers:
-            # Check if already merged to avoid redundant merging
-            first_lora_layer = next(iter(self.lora_layers.values()))
-            if not first_lora_layer.merged:
-                logger.info(f"Merging LoRA weights before saving checkpoint: {name}")
-                num_merged = merge_lora_weights(self.model)
-                logger.info(f"Merged {num_merged} LoRA layers into base model")
-                lora_was_merged = True
+        # Handle adapter-only saves when using LoRA
+        if self.config.use_lora and self.config.save_adapter_only:
+            # Save adapter only (no weight merging needed)
+            from gliner2.training.lora import save_lora_adapter
+            save_lora_adapter(self.model, checkpoint_dir)
+            
+            # Save training state separately if requested
+            if self.config.save_optimizer_state:
+                state = {
+                    "global_step": self.global_step,
+                    "epoch": self.epoch,
+                    "best_metric": self.best_metric,
+                    "optimizer_state": self.optimizer.state_dict(),
+                    "scheduler_state": self.scheduler.state_dict(),
+                }
+                if self.scaler:
+                    state["scaler_state"] = self.scaler.state_dict()
+
+                torch.save(state, checkpoint_dir / "training_state.pt")
+                logger.info(f"Saved adapter checkpoint: {name} (with training state)")
             else:
-                logger.debug("LoRA weights already merged, skipping merge")
-        
-        # Save the model (with merged weights if LoRA was used)
-        self.model.save_pretrained(str(checkpoint_dir))
-        
-        # Unmerge weights after saving to continue training with LoRA
-        if lora_was_merged:
-            from gliner2.training.lora import unmerge_lora_weights
-            logger.debug("Unmerging LoRA weights to continue training")
-            unmerge_lora_weights(self.model)
-        
-        # Save LoRA configuration if used
-        if self.config.use_lora:
-            lora_config_dict = {
-                "use_lora": True,
-                "lora_r": self.config.lora_r,
-                "lora_alpha": self.config.lora_alpha,
-                "lora_dropout": self.config.lora_dropout,
-                "lora_target_modules": self.config.lora_target_modules,
-                "merged": True,  # Weights are always merged in checkpoints
-            }
-            import json
-            with open(checkpoint_dir / "lora_config.json", "w") as f:
-                json.dump(lora_config_dict, f, indent=2)
-            logger.info("Saved LoRA configuration to lora_config.json")
-
-        # Save training state (optimizer, scheduler, etc.) if enabled
-        if self.config.save_optimizer_state:
-            state = {
-                "global_step": self.global_step,
-                "epoch": self.epoch,
-                "best_metric": self.best_metric,
-                "optimizer_state": self.optimizer.state_dict(),
-                "scheduler_state": self.scheduler.state_dict(),
-            }
-            if self.scaler:
-                state["scaler_state"] = self.scaler.state_dict()
-
-            torch.save(state, checkpoint_dir / "training_state.pt")
-            logger.info(f"Saved checkpoint: {name} (with training state)")
+                logger.info(f"Saved adapter checkpoint: {name} (adapter only, no training state)")
         else:
-            logger.info(f"Saved checkpoint: {name} (model only, no training state)")
+            # Original behavior: save full model with merged weights
+            lora_was_merged = False
+            if self.config.use_lora and self.lora_layers:
+                # Check if already merged to avoid redundant merging
+                first_lora_layer = next(iter(self.lora_layers.values()))
+                if not first_lora_layer.merged:
+                    logger.info(f"Merging LoRA weights before saving checkpoint: {name}")
+                    num_merged = merge_lora_weights(self.model)
+                    logger.info(f"Merged {num_merged} LoRA layers into base model")
+                    lora_was_merged = True
+                else:
+                    logger.debug("LoRA weights already merged, skipping merge")
+            
+            # Save the model (with merged weights if LoRA was used)
+            self.model.save_pretrained(str(checkpoint_dir))
+            
+            # Unmerge weights after saving to continue training with LoRA
+            if lora_was_merged:
+                from gliner2.training.lora import unmerge_lora_weights
+                logger.debug("Unmerging LoRA weights to continue training")
+                unmerge_lora_weights(self.model)
+            
+            # Save LoRA configuration if used
+            if self.config.use_lora:
+                lora_config_dict = {
+                    "use_lora": True,
+                    "lora_r": self.config.lora_r,
+                    "lora_alpha": self.config.lora_alpha,
+                    "lora_dropout": self.config.lora_dropout,
+                    "lora_target_modules": self.config.lora_target_modules,
+                    "merged": True,  # Weights are always merged in full checkpoints
+                }
+                import json
+                with open(checkpoint_dir / "lora_config.json", "w") as f:
+                    json.dump(lora_config_dict, f, indent=2)
+                logger.info("Saved LoRA configuration to lora_config.json")
+
+            # Save training state (optimizer, scheduler, etc.) if enabled
+            if self.config.save_optimizer_state:
+                state = {
+                    "global_step": self.global_step,
+                    "epoch": self.epoch,
+                    "best_metric": self.best_metric,
+                    "optimizer_state": self.optimizer.state_dict(),
+                    "scheduler_state": self.scheduler.state_dict(),
+                }
+                if self.scaler:
+                    state["scaler_state"] = self.scaler.state_dict()
+
+                torch.save(state, checkpoint_dir / "training_state.pt")
+                logger.info(f"Saved checkpoint: {name} (with training state)")
+            else:
+                logger.info(f"Saved checkpoint: {name} (model only, no training state)")
 
         if self.wandb_run and name in ["best", "final"]:
             try:
@@ -1305,39 +1331,49 @@ class GLiNER2Trainer:
         """
         Resume training from a checkpoint.
         
-        Note: Checkpoints contain merged weights. If you want to continue training
-        with LoRA, ensure use_lora=True in your TrainingConfig. LoRA will be
-        re-applied to the loaded model.
+        Handles both adapter-only and full checkpoints.
         """
+        from gliner2.training.lora import LoRAAdapterConfig
+        
         checkpoint_dir = Path(checkpoint_path)
         
-        # Check if checkpoint was saved with LoRA
-        lora_config_path = checkpoint_dir / "lora_config.json"
-        if lora_config_path.exists():
-            import json
-            with open(lora_config_path) as f:
-                lora_config = json.load(f)
-            logger.info(
-                f"Checkpoint was trained with LoRA (r={lora_config.get('lora_r')}, "
-                f"alpha={lora_config.get('lora_alpha')}). Weights are merged."
-            )
-            if self.config.use_lora:
+        if LoRAAdapterConfig.is_adapter_path(checkpoint_path):
+            # Adapter checkpoint - load adapter onto existing model
+            logger.info(f"Loading adapter checkpoint from {checkpoint_path}")
+            self.model.load_adapter(checkpoint_path)
+            
+            # Update lora_layers reference
+            self.lora_layers = self.model._lora_layers
+        else:
+            # Full model checkpoint
+            # Check if checkpoint was saved with LoRA
+            lora_config_path = checkpoint_dir / "lora_config.json"
+            if lora_config_path.exists():
+                import json
+                with open(lora_config_path) as f:
+                    lora_config = json.load(f)
                 logger.info(
-                    "LoRA is enabled in current config. LoRA layers will be re-applied "
-                    "on top of the loaded merged weights."
+                    f"Checkpoint was trained with LoRA (r={lora_config.get('lora_r')}, "
+                    f"alpha={lora_config.get('lora_alpha')}). Weights are merged."
                 )
-        
-        # Load model (with merged weights if it was trained with LoRA)
-        self.model = self.model.__class__.from_pretrained(str(checkpoint_dir))
-        self.model.to(self.device)
-        
-        # Re-apply LoRA if enabled in current config
-        # This creates new LoRA layers initialized from scratch
-        if self.config.use_lora:
-            logger.info("Re-applying LoRA to resumed model...")
-            self.lora_layers = {}
-            self._setup_lora()
+                if self.config.use_lora:
+                    logger.info(
+                        "LoRA is enabled in current config. LoRA layers will be re-applied "
+                        "on top of the loaded merged weights."
+                    )
+            
+            # Load model (with merged weights if it was trained with LoRA)
+            self.model = self.model.__class__.from_pretrained(str(checkpoint_dir))
+            self.model.to(self.device)
+            
+            # Re-apply LoRA if enabled in current config
+            # This creates new LoRA layers initialized from scratch
+            if self.config.use_lora:
+                logger.info("Re-applying LoRA to resumed model...")
+                self.lora_layers = {}
+                self._setup_lora()
 
+        # Load training state if exists
         state_path = checkpoint_dir / "training_state.pt"
         if state_path.exists():
             state = torch.load(state_path, map_location=self.device)

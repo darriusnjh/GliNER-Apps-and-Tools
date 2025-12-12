@@ -11,13 +11,17 @@ Paper: https://arxiv.org/abs/2106.09685
 
 from __future__ import annotations
 
+import json
 import logging
 import math
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Set, Tuple
+from dataclasses import dataclass, field, asdict
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import torch
 import torch.nn as nn
+from safetensors.torch import save_file, load_file
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +71,67 @@ class LoRAConfig:
             raise ValueError(f"LoRA dropout must be in [0, 1), got {self.dropout}")
         if self.enabled and not self.target_modules:
             raise ValueError("target_modules cannot be empty when LoRA is enabled")
+
+
+@dataclass
+class LoRAAdapterConfig:
+    """
+    Configuration for a saved LoRA adapter.
+    
+    This is the config that gets saved with adapter-only checkpoints.
+    """
+    adapter_type: str = "lora"
+    adapter_version: str = "1.0"
+    lora_r: int = 8
+    lora_alpha: float = 16.0
+    lora_dropout: float = 0.0
+    target_modules: List[str] = field(default_factory=list)
+    created_at: str = ""
+    
+    def save(self, path: Union[str, Path]) -> None:
+        """Save adapter config to JSON file."""
+        path = Path(path)
+        path.mkdir(parents=True, exist_ok=True)
+        config_path = path / "adapter_config.json"
+        
+        # Set created_at if not set
+        if not self.created_at:
+            self.created_at = datetime.utcnow().isoformat() + "Z"
+        
+        with open(config_path, "w") as f:
+            json.dump(asdict(self), f, indent=2)
+        
+        logger.info(f"Saved adapter config to {config_path}")
+    
+    @classmethod
+    def load(cls, path: Union[str, Path]) -> 'LoRAAdapterConfig':
+        """Load adapter config from JSON file or directory."""
+        path = Path(path)
+        
+        # If path is a directory, look for adapter_config.json
+        if path.is_dir():
+            config_path = path / "adapter_config.json"
+        else:
+            config_path = path
+        
+        if not config_path.exists():
+            raise FileNotFoundError(f"Adapter config not found at {config_path}")
+        
+        with open(config_path) as f:
+            config_dict = json.load(f)
+        
+        return cls(**config_dict)
+    
+    @classmethod
+    def is_adapter_path(cls, path: Union[str, Path]) -> bool:
+        """Check if path contains an adapter."""
+        path = Path(path)
+        
+        # Check for adapter_config.json
+        if path.is_dir():
+            return (path / "adapter_config.json").exists()
+        else:
+            return path.name == "adapter_config.json" and path.exists()
 
 
 # =============================================================================
@@ -222,15 +287,15 @@ def apply_lora_to_model(
     config: LoRAConfig,
 ) -> Tuple[nn.Module, Dict[str, LoRALayer]]:
     """
-    Apply LoRA to model with different rules for encoder vs non-encoder layers.
+    Apply LoRA to ALL linear layers matching target_modules.
     
-    For encoder: Only apply LoRA to target modules specified in config.target_modules.
-    For non-encoder layers: Apply LoRA to ALL linear layers.
+    No special handling for encoder vs non-encoder.
+    target_modules uses substring matching across entire model.
     
     Parameters
     ----------
     model : nn.Module
-        The model to apply LoRA to (should have .encoder attribute for GLiNER2).
+        The model to apply LoRA to.
     config : LoRAConfig
         LoRA configuration.
     
@@ -246,34 +311,18 @@ def apply_lora_to_model(
         return model, {}
     
     lora_layers = {}
-    encoder_lora_count = 0
-    non_encoder_lora_count = 0
     
-    def _should_apply_lora_to_encoder_module(module_name: str) -> bool:
-        """Check if LoRA should be applied to this encoder module using substring matching."""
+    def _should_apply_lora(module_name: str) -> bool:
+        """Check if LoRA should be applied using substring matching."""
         return any(target in module_name for target in config.target_modules)
     
     # Recursively find and replace modules
-    def _inject_lora_recursive(module: nn.Module, prefix: str = "", in_encoder: bool = False):
-        nonlocal encoder_lora_count, non_encoder_lora_count
-        
+    def _inject_lora_recursive(module: nn.Module, prefix: str = ""):
         for name, child in module.named_children():
             full_name = f"{prefix}.{name}" if prefix else name
             
-            # Check if we're entering the encoder
-            is_encoder_module = (name == "encoder" and not prefix) or in_encoder
-            
-            # Determine if we should apply LoRA to this Linear layer
-            should_apply = False
-            if isinstance(child, nn.Linear):
-                if is_encoder_module:
-                    # In encoder: only apply to target modules
-                    should_apply = _should_apply_lora_to_encoder_module(name)
-                else:
-                    # Outside encoder: apply to all Linear layers
-                    should_apply = True
-            
-            if should_apply:
+            # Apply LoRA to matching Linear layers
+            if isinstance(child, nn.Linear) and _should_apply_lora(name):
                 # Replace with LoRA layer
                 lora_layer = LoRALayer(
                     base_layer=child,
@@ -282,31 +331,25 @@ def apply_lora_to_model(
                     dropout=config.dropout,
                 )
                 setattr(module, name, lora_layer)
-                lora_layers[f"model.{full_name}"] = lora_layer
+                lora_layers[full_name] = lora_layer
                 
-                if is_encoder_module:
-                    encoder_lora_count += 1
-                else:
-                    non_encoder_lora_count += 1
-                
-                logger.debug(f"Applied LoRA to model.{full_name} (in={child.in_features}, out={child.out_features}, encoder={is_encoder_module})")
+                logger.debug(
+                    f"Applied LoRA to {full_name} "
+                    f"(in={child.in_features}, out={child.out_features})"
+                )
             else:
                 # Recurse into child
-                _inject_lora_recursive(child, full_name, is_encoder_module)
+                _inject_lora_recursive(child, full_name)
     
     _inject_lora_recursive(model)
     
     if not lora_layers:
         logger.warning(
-            f"No LoRA layers were applied. For encoder, target modules {config.target_modules} "
+            f"No LoRA layers were applied. Target modules {config.target_modules} "
             f"not found. Check your target_modules configuration."
         )
     else:
-        logger.info(
-            f"Applied LoRA to {len(lora_layers)} layers total: "
-            f"{encoder_lora_count} in encoder (targeted), "
-            f"{non_encoder_lora_count} in non-encoder (all linear)"
-        )
+        logger.info(f"Applied LoRA to {len(lora_layers)} layers")
     
     return model, lora_layers
 
@@ -503,4 +546,228 @@ def remove_lora_from_model(model: nn.Module) -> nn.Module:
     _remove_lora_recursive(model)
     logger.info("Removed all LoRA layers from model")
     return model
+
+
+# =============================================================================
+# Adapter Management Functions
+# =============================================================================
+
+def save_lora_adapter(
+    model: nn.Module,
+    save_path: Union[str, Path],
+) -> None:
+    """
+    Save only LoRA adapter weights and config.
+    
+    Args:
+        model: Model with LoRA layers (must NOT be merged)
+        save_path: Directory to save adapter
+    
+    Saves:
+        - adapter_config.json
+        - adapter_weights.safetensors
+    """
+    save_path = Path(save_path)
+    save_path.mkdir(parents=True, exist_ok=True)
+    
+    # Collect LoRA weights and config
+    lora_state = {}
+    lora_config = None
+    
+    for name, module in model.named_modules():
+        if isinstance(module, LoRALayer):
+            if module.merged:
+                raise ValueError(
+                    "Cannot save adapter with merged weights. "
+                    "Call unmerge_lora_weights() first."
+                )
+            # Save LoRA matrices with full path from model root
+            lora_state[f"{name}.lora_A"] = module.lora_A.data
+            lora_state[f"{name}.lora_B"] = module.lora_B.data
+            
+            # Extract config from first LoRA layer
+            if lora_config is None:
+                lora_config = {
+                    "lora_r": module.r,
+                    "lora_alpha": module.alpha,
+                    "lora_dropout": module.lora_dropout.p if hasattr(module.lora_dropout, 'p') else 0.0,
+                }
+    
+    if not lora_state:
+        raise ValueError("No LoRA layers found in model")
+    
+    # Save weights
+    weights_path = save_path / "adapter_weights.safetensors"
+    save_file(lora_state, str(weights_path))
+    logger.info(f"Saved {len(lora_state)} LoRA tensors to {weights_path}")
+    
+    # Determine target modules from layer names
+    target_modules = set()
+    for key in lora_state.keys():
+        # Extract module name from full path (e.g., "encoder.layer.0.attention.self.query")
+        parts = key.split(".")
+        if len(parts) > 0:
+            # Get the last meaningful name before .lora_A or .lora_B
+            module_name = parts[-2] if len(parts) >= 2 else parts[-1]
+            target_modules.add(module_name)
+    
+    # Create and save adapter config
+    adapter_config = LoRAAdapterConfig(
+        adapter_type="lora",
+        adapter_version="1.0",
+        lora_r=lora_config["lora_r"],
+        lora_alpha=lora_config["lora_alpha"],
+        lora_dropout=lora_config["lora_dropout"],
+        target_modules=sorted(list(target_modules)),
+        created_at=datetime.utcnow().isoformat() + "Z"
+    )
+    adapter_config.save(save_path)
+    
+    logger.info(f"Saved LoRA adapter to {save_path}")
+
+
+def load_lora_adapter(
+    model: nn.Module,
+    adapter_path: Union[str, Path],
+    auto_unload: bool = True,
+) -> Dict[str, LoRALayer]:
+    """
+    Load LoRA adapter onto model.
+    
+    Args:
+        model: Base model (should not have LoRA applied)
+        adapter_path: Path to adapter directory
+        auto_unload: If True, unload existing adapter first
+    
+    Returns:
+        Dict of LoRA layers that were applied
+    """
+    adapter_path = Path(adapter_path)
+    
+    # Load adapter config
+    adapter_config = LoRAAdapterConfig.load(adapter_path)
+    
+    # Unload existing adapter if requested
+    if auto_unload and has_lora_adapter(model):
+        logger.info("Unloading existing adapter before loading new one")
+        unload_lora_adapter(model)
+    
+    # Load adapter weights
+    weights_path = adapter_path / "adapter_weights.safetensors"
+    if not weights_path.exists():
+        raise FileNotFoundError(f"Adapter weights not found at {weights_path}")
+    
+    lora_state = load_file(str(weights_path))
+    logger.info(f"Loaded {len(lora_state)} LoRA tensors from {weights_path}")
+    
+    # Apply LoRA to matching layers
+    lora_config = LoRAConfig(
+        enabled=True,
+        r=adapter_config.lora_r,
+        alpha=adapter_config.lora_alpha,
+        dropout=adapter_config.lora_dropout,
+        target_modules=adapter_config.target_modules,
+    )
+    
+    model, lora_layers = apply_lora_to_model(model, lora_config)
+    
+    # Load saved weights into LoRA layers
+    for name, module in model.named_modules():
+        if isinstance(module, LoRALayer):
+            lora_a_key = f"{name}.lora_A"
+            lora_b_key = f"{name}.lora_B"
+            
+            if lora_a_key in lora_state and lora_b_key in lora_state:
+                module.lora_A.data = lora_state[lora_a_key]
+                module.lora_B.data = lora_state[lora_b_key]
+                logger.debug(f"Loaded weights for {name}")
+            else:
+                logger.warning(f"No saved weights found for {name}")
+    
+    logger.info(f"Loaded LoRA adapter from {adapter_path}")
+    return lora_layers
+
+
+def unload_lora_adapter(model: nn.Module) -> int:
+    """
+    Remove all LoRA layers, restoring original Linear layers.
+    
+    Unlike remove_lora_from_model, this does NOT merge weights.
+    Just removes LoRA layers entirely.
+    
+    Returns:
+        Number of layers unloaded
+    """
+    count = 0
+    
+    def _get_parent_module(model: nn.Module, full_name: str) -> Tuple[nn.Module, str]:
+        """Get parent module and child name from full module path."""
+        parts = full_name.split('.')
+        parent = model
+        for part in parts[:-1]:
+            parent = getattr(parent, part)
+        return parent, parts[-1]
+    
+    # Collect all LoRA layers first (to avoid modifying dict during iteration)
+    lora_layers = []
+    for name, module in model.named_modules():
+        if isinstance(module, LoRALayer):
+            lora_layers.append((name, module))
+    
+    # Remove LoRA layers
+    for name, lora_layer in lora_layers:
+        parent, child_name = _get_parent_module(model, name)
+        # Replace with original base_layer (no merge)
+        setattr(parent, child_name, lora_layer.base_layer)
+        count += 1
+        logger.debug(f"Unloaded LoRA from {name}")
+    
+    if count > 0:
+        logger.info(f"Unloaded {count} LoRA layers")
+    
+    return count
+
+
+def has_lora_adapter(model: nn.Module) -> bool:
+    """Check if model has LoRA layers applied."""
+    for module in model.modules():
+        if isinstance(module, LoRALayer):
+            return True
+    return False
+
+
+def get_adapter_config(model: nn.Module) -> Optional[LoRAAdapterConfig]:
+    """
+    Get config of currently loaded adapter, if any.
+    
+    Note: This reconstructs config from LoRA layers.
+    The actual adapter config is stored in model._adapter_config
+    when loaded via model.load_adapter().
+    """
+    if not has_lora_adapter(model):
+        return None
+    
+    # Extract config from first LoRA layer
+    for module in model.modules():
+        if isinstance(module, LoRALayer):
+            target_modules = set()
+            # Collect all target module names
+            for name, m in model.named_modules():
+                if isinstance(m, LoRALayer):
+                    # Extract module name
+                    parts = name.split(".")
+                    if parts:
+                        target_modules.add(parts[-1])
+            
+            return LoRAAdapterConfig(
+                adapter_type="lora",
+                adapter_version="1.0",
+                lora_r=module.r,
+                lora_alpha=module.alpha,
+                lora_dropout=module.lora_dropout.p if hasattr(module.lora_dropout, 'p') else 0.0,
+                target_modules=sorted(list(target_modules)),
+                created_at=""
+            )
+    
+    return None
 
