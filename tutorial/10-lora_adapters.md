@@ -137,7 +137,7 @@ trainer = GLiNER2Trainer(model=base_model, config=config)
 # Train adapter
 trainer.train(train_data=legal_examples)
 
-# Adapter automatically saved to ./legal_adapter/checkpoints/final/
+# Adapter automatically saved to ./legal_adapter/final/
 ```
 
 **Training output:**
@@ -281,10 +281,10 @@ def train_domain_adapter(
     results = trainer.train(train_data=examples)
     
     print(f"\n✅ {domain_name.capitalize()} adapter trained!")
-    print(f"📁 Saved to: {adapter_path}/checkpoints/final/")
+    print(f"📁 Saved to: {adapter_path}/final/")
     print(f"⏱️  Training time: {results['total_time_seconds']:.2f}s")
     
-    return f"{adapter_path}/checkpoints/final"
+    return f"{adapter_path}/final"
 
 # ============================================================================
 # Train All Adapters
@@ -325,7 +325,7 @@ from gliner2 import GLiNER2
 model = GLiNER2.from_pretrained("fastino/gliner2-base-v1")
 
 # Load legal adapter
-model.load_adapter("./adapters/legal_adapter/checkpoints/final")
+model.load_adapter("./adapters/legal_adapter/final")
 
 # Use the model
 result = model.extract_entities(
@@ -343,21 +343,21 @@ model = GLiNER2.from_pretrained("fastino/gliner2-base-v1")
 
 # Legal domain
 print("📋 Legal Analysis:")
-model.load_adapter("./adapters/legal_adapter/checkpoints/final")
+model.load_adapter("./adapters/legal_adapter/final")
 legal_text = "Google LLC filed a complaint against Oracle Corporation."
 legal_result = model.extract_entities(legal_text, ["company", "legal_action"])
 print(f"  {legal_result}")
 
 # Swap to medical domain
 print("\n🏥 Medical Analysis:")
-model.load_adapter("./adapters/medical_adapter/checkpoints/final")
+model.load_adapter("./adapters/medical_adapter/final")
 medical_text = "Patient presents with Pneumonia and was prescribed Amoxicillin."
 medical_result = model.extract_entities(medical_text, ["disease", "drug"])
 print(f"  {medical_result}")
 
 # Swap to support domain
 print("\n💬 Support Analysis:")
-model.load_adapter("./adapters/support_adapter/checkpoints/final")
+model.load_adapter("./adapters/support_adapter/final")
 support_text = "Customer reported Order #12345 not delivered on time."
 support_result = model.extract_entities(support_text, ["order_id", "issue"])
 print(f"  {support_result}")
@@ -447,9 +447,9 @@ documents_by_domain = {
 }
 
 adapters = {
-    "legal": "./adapters/legal_adapter/checkpoints/final",
-    "medical": "./adapters/medical_adapter/checkpoints/final",
-    "support": "./adapters/support_adapter/checkpoints/final",
+    "legal": "./adapters/legal_adapter/final",
+    "medical": "./adapters/medical_adapter/final",
+    "support": "./adapters/support_adapter/final",
 }
 
 results = process_documents_by_domain(model, documents_by_domain, adapters)
@@ -496,9 +496,9 @@ class MultiTenantEntityExtractor:
 extractor = MultiTenantEntityExtractor(
     base_model_name="fastino/gliner2-base-v1",
     tenant_adapters={
-        "legal_firm_123": "./adapters/legal_adapter/checkpoints/final",
-        "hospital_456": "./adapters/medical_adapter/checkpoints/final",
-        "ecommerce_789": "./adapters/support_adapter/checkpoints/final",
+        "legal_firm_123": "./adapters/legal_adapter/final",
+        "hospital_456": "./adapters/medical_adapter/final",
+        "ecommerce_789": "./adapters/support_adapter/final",
     }
 )
 
@@ -573,9 +573,9 @@ def classify_and_extract(document: str, model: GLiNER2, adapters: dict):
 model = GLiNER2.from_pretrained("fastino/gliner2-base-v1")
 
 adapters = {
-    "legal": "./adapters/legal_adapter/checkpoints/final",
-    "medical": "./adapters/medical_adapter/checkpoints/final",
-    "support": "./adapters/support_adapter/checkpoints/final",
+    "legal": "./adapters/legal_adapter/final",
+    "medical": "./adapters/medical_adapter/final",
+    "support": "./adapters/support_adapter/final",
 }
 
 document = "Patient John Smith diagnosed with Type 2 Diabetes on 2024-01-15."
@@ -658,9 +658,9 @@ class AdapterABTester:
 tester = AdapterABTester(
     base_model_name="fastino/gliner2-base-v1",
     adapter_variants={
-        "v1_r4": "./adapters/legal_v1_r4/checkpoints/final",
-        "v2_r8": "./adapters/legal_v2_r8/checkpoints/final",
-        "v3_r16": "./adapters/legal_v3_r16/checkpoints/final",
+        "v1_r4": "./adapters/legal_v1_r4/final",
+        "v2_r8": "./adapters/legal_v2_r8/final",
+        "v3_r16": "./adapters/legal_v3_r16/final",
     }
 )
 
@@ -739,13 +739,13 @@ project/
 ├── adapters/
 │   ├── legal/
 │   │   ├── v1_r8/
-│   │   │   └── checkpoints/final/
+│   │   │   └── final/
 │   │   └── v2_r16/
-│   │       └── checkpoints/final/
+│   │       └── final/
 │   ├── medical/
-│   │   └── checkpoints/final/
+│   │   └── final/
 │   └── support/
-│       └── checkpoints/final/
+│       └── final/
 └── scripts/
     ├── train_adapters.py
     └── evaluate_adapters.py
@@ -757,7 +757,7 @@ project/
 # adapter_metadata.json
 {
     "legal_v1": {
-        "path": "./adapters/legal/v1_r8/checkpoints/final",
+        "path": "./adapters/legal/v1_r8/final",
         "base_model": "fastino/gliner2-base-v1",
         "lora_r": 8,
         "lora_alpha": 16.0,
@@ -767,7 +767,7 @@ project/
         "notes": "Initial legal domain adapter"
     },
     "legal_v2": {
-        "path": "./adapters/legal/v2_r16/checkpoints/final",
+        "path": "./adapters/legal/v2_r16/final",
         "base_model": "fastino/gliner2-base-v1",
         "lora_r": 16,
         "lora_alpha": 32.0,
@@ -861,13 +861,13 @@ config = TrainingConfig(
 import os
 from gliner2.training.lora import LoRAAdapterConfig
 
-adapter_path = "./adapters/legal_adapter/checkpoints/final"
+adapter_path = "./adapters/legal_adapter/final"
 
 # Check if path exists
 if not os.path.exists(adapter_path):
     print(f"Path does not exist: {adapter_path}")
     # List available checkpoints
-    checkpoint_dir = "./adapters/legal_adapter/checkpoints"
+    checkpoint_dir = "./adapters/legal_adapter"
     if os.path.exists(checkpoint_dir):
         checkpoints = os.listdir(checkpoint_dir)
         print(f"Available checkpoints: {checkpoints}")
@@ -921,10 +921,10 @@ trainer.train(train_data=examples)
 
 # Loading
 model = GLiNER2.from_pretrained("base-model")
-model.load_adapter("./adapter/checkpoints/final")
+model.load_adapter("./adapter/final")
 
 # Swapping
-model.load_adapter("./other_adapter/checkpoints/final")
+model.load_adapter("./other_adapter/final")
 
 # Unloading
 model.unload_adapter()

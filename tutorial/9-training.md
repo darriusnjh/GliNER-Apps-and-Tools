@@ -159,7 +159,7 @@ print(f"Total steps: {results['total_steps']}")
 print(f"Training time: {results['total_time_seconds']/60:.1f} minutes")
 
 # Step 7: Load best model for inference
-best_model = GLiNER2.from_pretrained("./ner_model/checkpoints/best")
+best_model = GLiNER2.from_pretrained("./ner_model/best")
 ```
 
 ### Example 2: Multi-Task Training (NER + Classification + Relations)
@@ -668,6 +668,8 @@ config = TrainingConfig(
 
 LoRA (Low-Rank Adaptation) enables parameter-efficient fine-tuning by training only a small number of additional parameters while keeping the base model frozen.
 
+> 📚 **For a comprehensive guide on training and using multiple LoRA adapters**, see [Tutorial 10: LoRA Adapters - Multi-Domain Inference](./10-lora_adapters.md)
+
 ### Why Use LoRA?
 
 - **Memory Efficient**: Train with 10-100x fewer parameters
@@ -712,7 +714,7 @@ trainer = GLiNER2Trainer(model, config)
 results = trainer.train(train_data="train.jsonl", eval_data="val.jsonl")
 
 # Checkpoints contain merged weights (ready for inference)
-best_model = GLiNER2.from_pretrained("./output_lora/checkpoints/best")
+best_model = GLiNER2.from_pretrained("./output_lora/best")
 ```
 
 ### LoRA Configuration Parameters
@@ -841,7 +843,7 @@ trainer.train(train_data=medical_examples)
 trainer = GLiNER2Trainer(model, config)
 
 # Resume from checkpoint (weights are merged in checkpoint)
-trainer.resume_from_checkpoint("./output_lora/checkpoints/checkpoint-1000")
+trainer.resume_from_checkpoint("./output_lora/checkpoint-1000")
 
 # Continue training (LoRA will be re-applied)
 trainer.train(train_data="train.jsonl")
@@ -882,7 +884,7 @@ trainer.train(train_data=examples, eval_data=eval_examples)
 trainer = GLiNER2Trainer(model, config)
 
 # Resume training
-trainer.resume_from_checkpoint("./output/checkpoints/checkpoint-1000")
+trainer.resume_from_checkpoint("./output/checkpoint-1000")
 trainer.train(train_data=examples)
 ```
 
