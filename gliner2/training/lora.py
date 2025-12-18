@@ -448,7 +448,10 @@ def get_lora_state_dict(model: nn.Module) -> Dict[str, torch.Tensor]:
 
 def merge_lora_weights(model: nn.Module) -> int:
     """
-    Merge all LoRA weights into their base layers.
+    Merge all LoRA weights into base layers and remove LoRA structure.
+    
+    After calling this, the model will have standard Linear layers with
+    merged weights. LoRA adapters are removed from the model.
     
     Parameters
     ----------
@@ -458,7 +461,7 @@ def merge_lora_weights(model: nn.Module) -> int:
     Returns
     -------
     int
-        Number of layers merged.
+        Number of layers merged and removed.
     """
     count = 0
     already_merged = 0
@@ -474,6 +477,12 @@ def merge_lora_weights(model: nn.Module) -> int:
         logger.debug(f"Merged LoRA weights in {count} layers")
     if already_merged > 0:
         logger.debug(f"Skipped {already_merged} layers (already merged)")
+    
+    # Remove LoRA layers after merging
+    if count > 0 or already_merged > 0:
+        remove_lora_from_model(model)
+        logger.info(f"Merged and removed LoRA layers from model")
+    
     return count
 
 
