@@ -1230,10 +1230,22 @@ class GLiNER2(Extractor):
         return self.batch_extract(texts, schema, batch_size, threshold, 0, format_results, include_confidence, include_spans)
 
     def _parse_field_spec(self, spec: str) -> Tuple[str, str, Optional[List[str]], Optional[str]]:
-        """Parse field specification string."""
-        parts = spec.split('::', 2)
+        """Parse field specification string.
+        
+        Format: "name::dtype::choices::description" where all parts after name are optional.
+        - dtype: 'str' for single value, 'list' for multiple values
+        - choices: [option1|option2|...] for enumerated options
+        - description: free text description
+        
+        Examples:
+            "restaurant::str::Restaurant name"
+            "seating::[indoor|outdoor|bar]::Seating preference"  
+            "dietary::[vegetarian|vegan|gluten-free|none]::list::Dietary restrictions"
+        """
+        parts = spec.split('::')  # No limit - parse all parts
         name = parts[0]
         dtype, choices, desc = "list", None, None
+        dtype_explicitly_set = False
 
         if len(parts) == 1:
             return name, dtype, choices, desc
@@ -1241,9 +1253,12 @@ class GLiNER2(Extractor):
         for part in parts[1:]:
             if part in ['str', 'list']:
                 dtype = part
+                dtype_explicitly_set = True
             elif part.startswith('[') and part.endswith(']'):
                 choices = [c.strip() for c in part[1:-1].split('|')]
-                dtype = "str"
+                # Only default to "str" if dtype wasn't explicitly set
+                if not dtype_explicitly_set:
+                    dtype = "str"
             else:
                 desc = part
 

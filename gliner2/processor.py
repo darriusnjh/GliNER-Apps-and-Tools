@@ -323,6 +323,10 @@ class SchemaTransformer:
         # Build classification prefix
         prefix = self._build_classification_prefix(schema)
 
+        # Save a copy of the original schema BEFORE wrapping modifies it
+        # This preserves choice field info for extraction
+        original_schema = copy.deepcopy(schema)
+
         # Handle classification field wrapping
         if prefix:
             self._wrap_classification_fields(schema, prefix)
@@ -362,7 +366,7 @@ class SchemaTransformer:
             start_token_idx=start_idx_map,
             end_token_idx=end_idx_map,
             text=text,
-            schema=schema,
+            schema=original_schema,  # Use original schema with choice info preserved
         )
 
     def _pad_batch(
