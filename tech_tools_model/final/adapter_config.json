@@ -1,0 +1,12 @@
+{
+  "adapter_type": "lora",
+  "adapter_version": "1.0",
+  "lora_r": 8,
+  "lora_alpha": 16.0,
+  "lora_dropout": 0.1,
+  "target_modules": [
+    "classifier",
+    "encoder"
+  ],
+  "created_at": "2026-02-05T02:38:01.196557Z"
+}
