@@ -16,6 +16,7 @@ Usage:
 """
 
 import argparse
+import ast
 import json
 from gliner2.model import Extractor
 from gliner2.training.trainer import GLiNER2Trainer, TrainingConfig
@@ -124,11 +125,14 @@ def parse_args():
 
 
 def _parse_json_value(val):
-    """Safely parse a JSON string into a Python object."""
-    if isinstance(val, str):
-        return json.loads(val)
+    """Safely parse a JSON/Python literal string into a Python object."""
     if pd.isna(val):
         return None
+    if isinstance(val, str):
+        try:
+            return json.loads(val)           # Try JSON first (double quotes)
+        except json.JSONDecodeError:
+            return ast.literal_eval(val)     # Fall back to Python literals (single quotes)
     return val  # already parsed (or numeric, etc.)
 
 
