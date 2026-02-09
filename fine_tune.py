@@ -8,117 +8,200 @@ This script is configured for CPU training with:
 - Reduced data loading workers
 
 Expected training time: ~10-30 minutes per epoch on modern CPU
+
+Usage:
+    python fine_tune.py --dataset training_data.csv
+    python fine_tune.py --dataset data.csv --output ./my_model --epochs 5 --batch-size 4
+    python fine_tune.py --dataset data.csv --base-model fastino/gliner2-base-v1 --lr 2e-5
 """
 
+import argparse
 from gliner2.model import Extractor
 from gliner2.training.trainer import GLiNER2Trainer, TrainingConfig
 from gliner2.training.data import InputExample
+import pandas as pd
 
-# Load base model
-print("Loading base model...")
-model = Extractor.from_pretrained("fastino/gliner2-base-v1")
 
-# Create training configuration with built-in LoRA support
-config = TrainingConfig(
-    output_dir="./tech_tools_model",
-    experiment_name="tech_tools_extraction",
-    
-    # Training settings (CPU-optimized)
-    num_epochs=10,
-    batch_size=2,                    # Smaller batch for CPU
-    gradient_accumulation_steps=8,   # Effective batch = 2 * 8 = 16
-    
-    # Learning rates 
-    encoder_lr=1e-5,  # Lower LR for encoder (it's pretrained)
-    task_lr=5e-4,     # Higher LR for task heads
-    
-    # LoRA configuration (built-in!)
-    use_lora=True,
-    lora_r=8,         # Keep rank small for faster training
-    lora_alpha=16.0,
-    lora_dropout=0.1,
-    lora_target_modules=["encoder", "classifier"],
-    save_adapter_only=True,  # Save only LoRA weights (small file)
-    
-    # Evaluation
-    eval_strategy="steps",
-    eval_steps=100,
-    save_best=True,
-    metric_for_best="eval_loss",
-    
-    # CPU Hardware Settings
-    fp16=False,       # ⚠️ Disabled for CPU (mixed precision only works on GPU)
-    num_workers=0,    # Set to 0 for CPU to avoid multiprocessing overhead
-    
-    # Logging
-    logging_steps=10,
-    report_to_wandb=False,  # Set to True if you want W&B logging
-)
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Fine-tune GLiNER2 for entity extraction (CPU-optimized)"
+    )
 
-# Option 1: Define training data inline (good for testing)
-# Option 2: Load from JSONL file (recommended for production)
-#   training_data = "training_data.jsonl"
-# Option 3: Load from multiple JSONL files
-#   training_data = ["data1.jsonl", "data2.jsonl"]
+    # Data arguments
+    parser.add_argument(
+        "--dataset", type=str, default="training_data.csv",
+        help="Path to training data CSV file (default: training_data.csv)"
+    )
+    parser.add_argument(
+        "--eval-dataset", type=str, default=None,
+        help="Path to evaluation data CSV file (optional)"
+    )
 
-# Example training data (you'll replace this with your data)
-training_data = [
-    InputExample(
-        text="We use ChatGPT for writing and AWS for cloud hosting.",
-        entities={
-            "AI Tool": ["ChatGPT"],
-            "Cloud Platform": ["AWS"]
-        }
-    ),
-    InputExample(
-        text="Our stack includes Python, Docker, and Kubernetes for orchestration.",
-        entities={
-            "Programming Language": ["Python"],
-            "Container Tool": ["Docker"],
-            "Orchestration Tool": ["Kubernetes"]
-        }
-    ),
-    InputExample(
-        text="The team deployed the application using Terraform and monitored it with Grafana.",
-        entities={
-            "Infrastructure Tool": ["Terraform"],
-            "Monitoring Tool": ["Grafana"]
-        }
-    ),
-    InputExample(
-        text="We're testing Claude and GPT-4 for our chatbot development.",
-        entities={
-            "AI Tool": ["Claude", "GPT-4"]
-        }
-    ),
-    # Add more examples here (recommend 100+ for good results)...
-]
+    # Model arguments
+    parser.add_argument(
+        "--base-model", type=str, default="fastino/gliner2-base-v1",
+        help="Base model to fine-tune (default: fastino/gliner2-base-v1)"
+    )
+    parser.add_argument(
+        "--output", type=str, default="./tech_tools_model",
+        help="Output directory for the fine-tuned model (default: ./tech_tools_model)"
+    )
+    parser.add_argument(
+        "--experiment-name", type=str, default="tech_tools_extraction",
+        help="Name of the experiment (default: tech_tools_extraction)"
+    )
 
-# Create trainer
-trainer = GLiNER2Trainer(
-    model=model,
-    config=config,
-    train_data=training_data,
-    # eval_data=eval_data,  # Optional: provide evaluation data
-)
+    # Training hyperparameters
+    parser.add_argument(
+        "--epochs", type=int, default=10,
+        help="Number of training epochs (default: 10)"
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=2,
+        help="Training batch size (default: 2)"
+    )
+    parser.add_argument(
+        "--grad-accum-steps", type=int, default=8,
+        help="Gradient accumulation steps (default: 8)"
+    )
+    parser.add_argument(
+        "--encoder-lr", type=float, default=1e-5,
+        help="Learning rate for the encoder (default: 1e-5)"
+    )
+    parser.add_argument(
+        "--task-lr", type=float, default=5e-4,
+        help="Learning rate for task heads (default: 5e-4)"
+    )
 
-# Start training
-print("\n🚀 Starting training...")
-print(f"📊 Training on {len(training_data)} examples")
-print(f"💾 Output directory: {config.output_dir}\n")
+    # LoRA arguments
+    parser.add_argument(
+        "--no-lora", action="store_true",
+        help="Disable LoRA (full fine-tuning instead)"
+    )
+    parser.add_argument(
+        "--lora-r", type=int, default=8,
+        help="LoRA rank (default: 8)"
+    )
+    parser.add_argument(
+        "--lora-alpha", type=float, default=16.0,
+        help="LoRA alpha (default: 16.0)"
+    )
+    parser.add_argument(
+        "--lora-dropout", type=float, default=0.1,
+        help="LoRA dropout (default: 0.1)"
+    )
 
-trainer.train()
+    # Evaluation & logging
+    parser.add_argument(
+        "--eval-steps", type=int, default=100,
+        help="Evaluate every N steps (default: 100)"
+    )
+    parser.add_argument(
+        "--logging-steps", type=int, default=10,
+        help="Log every N steps (default: 10)"
+    )
+    parser.add_argument(
+        "--wandb", action="store_true",
+        help="Enable Weights & Biases logging"
+    )
 
-print(f"\n✅ Training complete! Adapter saved to {config.output_dir}")
-print("\n" + "="*60)
-print("📝 To use your fine-tuned model:")
-print("="*60)
-print("""
+    # Hardware
+    parser.add_argument(
+        "--fp16", action="store_true",
+        help="Enable mixed precision (GPU only)"
+    )
+    parser.add_argument(
+        "--num-workers", type=int, default=0,
+        help="Number of data loading workers (default: 0 for CPU)"
+    )
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    # Load base model
+    print(f"Loading base model: {args.base_model}...")
+    model = Extractor.from_pretrained(args.base_model)
+
+    # Create training configuration from CLI arguments
+    use_lora = not args.no_lora
+    config = TrainingConfig(
+        output_dir=args.output,
+        experiment_name=args.experiment_name,
+
+        # Training settings
+        num_epochs=args.epochs,
+        batch_size=args.batch_size,
+        gradient_accumulation_steps=args.grad_accum_steps,
+
+        # Learning rates
+        encoder_lr=args.encoder_lr,
+        task_lr=args.task_lr,
+
+        # LoRA configuration
+        use_lora=use_lora,
+        lora_r=args.lora_r,
+        lora_alpha=args.lora_alpha,
+        lora_dropout=args.lora_dropout,
+        lora_target_modules=["encoder", "classifier"],
+        save_adapter_only=use_lora,
+
+        # Evaluation
+        eval_strategy="steps",
+        eval_steps=args.eval_steps,
+        save_best=True,
+        metric_for_best="eval_loss",
+
+        # Hardware Settings
+        fp16=args.fp16,
+        num_workers=args.num_workers,
+
+        # Logging
+        logging_steps=args.logging_steps,
+        report_to_wandb=args.wandb,
+    )
+
+    # Load training data (trainer expects a list of dicts, not a DataFrame)
+    print(f"Loading training data from: {args.dataset}")
+    training_data = pd.read_csv(args.dataset).to_dict("records")
+
+    # Load evaluation data if provided
+    eval_data = None
+    if args.eval_dataset:
+        print(f"Loading evaluation data from: {args.eval_dataset}")
+        eval_data = pd.read_csv(args.eval_dataset).to_dict("records")
+
+    # Create trainer
+    trainer = GLiNER2Trainer(
+        model=model,
+        config=config,
+        train_data=training_data,
+        eval_data=eval_data,
+    )
+
+    # Start training
+    print("\n🚀 Starting training...")
+    print(f"📊 Training on {len(training_data)} examples")
+    if eval_data is not None:
+        print(f"📊 Evaluating on {len(eval_data)} examples")
+    print(f"💾 Output directory: {config.output_dir}")
+    print(f"🔧 LoRA: {'enabled' if use_lora else 'disabled'}")
+    print(f"⚡ Effective batch size: {args.batch_size * args.grad_accum_steps}\n")
+
+    trainer.train()
+
+    print(f"\n✅ Training complete! {'Adapter' if use_lora else 'Model'} saved to {config.output_dir}")
+    print("\n" + "="*60)
+    print("📝 To use your fine-tuned model:")
+    print("="*60)
+    print(f"""
 from gliner2 import GLiNER2
 
 # Load base model + your adapter
-model = GLiNER2.from_pretrained("fastino/gliner2-base-v1")
-model.load_adapter("./tech_tools_model")
+model = GLiNER2.from_pretrained("{args.base_model}")
+model.load_adapter("{args.output}")
 
 # Extract tech tools
 text = "We use Terraform, AWS Lambda, and PostgreSQL."
@@ -126,3 +209,7 @@ entities = ["Infrastructure Tool", "Cloud Service", "Database"]
 result = model.extract_entities(text, entities)
 print(result)
 """)
+
+
+if __name__ == "__main__":
+    main()
