@@ -123,6 +123,15 @@ def parse_args():
     return parser.parse_args()
 
 
+def _parse_json_value(val):
+    """Safely parse a JSON string into a Python object."""
+    if isinstance(val, str):
+        return json.loads(val)
+    if pd.isna(val):
+        return None
+    return val  # already parsed (or numeric, etc.)
+
+
 def load_data(path: str) -> list[dict]:
     """Load training data from CSV or JSONL, parsing JSON string columns."""
     if path.endswith(".jsonl") or path.endswith(".json"):
@@ -131,23 +140,22 @@ def load_data(path: str) -> list[dict]:
     else:
         # CSV: JSON columns come back as strings and need to be parsed
         df = pd.read_csv(path)
-        try:
-            df["entities"] = df["entities"].apply(json.loads)
-        except json.JSONDecodeError as e:
-            print(f"  Warning: Could not parse JSON in column 'entities': {e}")
+        print(f"  CSV columns: {list(df.columns)}")
+        print(f"  CSV shape: {df.shape}")
+        print(f"  First row sample: {df.iloc[0].to_dict()}")
+
+        # Parse any columns that should contain JSON
+        cols_to_parse = JSON_COLUMNS & set(df.columns)
+        for col in cols_to_parse:
+            print(f"  Parsing JSON column: '{col}' (dtype: {df[col].dtype})")
+            df[col] = df[col].apply(_parse_json_value)
+            # Verify parsing worked
+            first_val = df[col].iloc[0]
+            print(f"    After parsing, first value type: {type(first_val).__name__} -> {repr(first_val)[:100]}")
+
         records = df.to_dict("records")
-    #     cols_to_parse = JSON_COLUMNS & set(df.columns)
-    #     if cols_to_parse:
-    #         print(f"  Parsing JSON columns: {', '.join(sorted(cols_to_parse))}")
-    #     for record in records:
-    #         for col in cols_to_parse:
-    #             val = record.get(col)
-    #             if isinstance(val, str):
-    #                 try:
-    #                     record[col] = json.loads(val)
-    #                 except json.JSONDecodeError:
-    #                     print(f"  Warning: Could not parse JSON in column '{col}': {val[:80]}...")
-    # print(f"  Loaded {len(records)} records")
+
+    print(f"  Loaded {len(records)} records")
     return records
 
 
