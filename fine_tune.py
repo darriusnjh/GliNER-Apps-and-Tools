@@ -131,19 +131,23 @@ def load_data(path: str) -> list[dict]:
     else:
         # CSV: JSON columns come back as strings and need to be parsed
         df = pd.read_csv(path)
+        try:
+            df["entities"] = df["entities"].apply(json.loads)
+        except json.JSONDecodeError as e:
+            print(f"  Warning: Could not parse JSON in column 'entities': {e}")
         records = df.to_dict("records")
-        cols_to_parse = JSON_COLUMNS & set(df.columns)
-        if cols_to_parse:
-            print(f"  Parsing JSON columns: {', '.join(sorted(cols_to_parse))}")
-        for record in records:
-            for col in cols_to_parse:
-                val = record.get(col)
-                if isinstance(val, str):
-                    try:
-                        record[col] = json.loads(val)
-                    except json.JSONDecodeError:
-                        print(f"  Warning: Could not parse JSON in column '{col}': {val[:80]}...")
-    print(f"  Loaded {len(records)} records")
+    #     cols_to_parse = JSON_COLUMNS & set(df.columns)
+    #     if cols_to_parse:
+    #         print(f"  Parsing JSON columns: {', '.join(sorted(cols_to_parse))}")
+    #     for record in records:
+    #         for col in cols_to_parse:
+    #             val = record.get(col)
+    #             if isinstance(val, str):
+    #                 try:
+    #                     record[col] = json.loads(val)
+    #                 except json.JSONDecodeError:
+    #                     print(f"  Warning: Could not parse JSON in column '{col}': {val[:80]}...")
+    # print(f"  Loaded {len(records)} records")
     return records
 
 
