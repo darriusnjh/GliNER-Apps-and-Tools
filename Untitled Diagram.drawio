@@ -1,6 +1,6 @@
 <mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36" version="29.4.0">
   <diagram name="Page-1" id="DzHKaM0tJZQ1xSFMVLwv">
-    <mxGraphModel dx="1123" dy="710" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+    <mxGraphModel dx="1747" dy="1104" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -13,7 +13,7 @@
         <mxCell id="zV03kIuOqvWoOWJ2pc5r-17" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-3">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="zV03kIuOqvWoOWJ2pc5r-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="DeBERTa" vertex="1">
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;gradientColor=#97d077;strokeColor=#82b366;" value="DeBERTa" vertex="1">
           <mxGeometry height="125" width="190" x="355" y="585" as="geometry" />
         </mxCell>
         <mxCell id="zV03kIuOqvWoOWJ2pc5r-11" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-5">
@@ -28,13 +28,13 @@
         <mxCell id="zV03kIuOqvWoOWJ2pc5r-13" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-6">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="zV03kIuOqvWoOWJ2pc5r-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Text Token Embeddings" vertex="1">
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Text Token Embeddings&lt;div&gt;(shape [ seq_len, D ] )&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="195" x="210" y="940" as="geometry" />
         </mxCell>
         <mxCell id="zV03kIuOqvWoOWJ2pc5r-14" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-7">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="zV03kIuOqvWoOWJ2pc5r-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Schema Token Embeddings&amp;nbsp;&lt;div&gt;(shape [ k +1, D ]&lt;/div&gt;" vertex="1">
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Schema Token Embeddings&amp;nbsp;&lt;div&gt;(shape [ K +1, D ]&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="195" x="490" y="940" as="geometry" />
         </mxCell>
         <mxCell id="zV03kIuOqvWoOWJ2pc5r-16" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;">
@@ -42,32 +42,50 @@
             <mxPoint x="450" y="1250.0000000000002" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="zV03kIuOqvWoOWJ2pc5r-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Span Replication Layer&amp;nbsp;&lt;div&gt;(max width = 8)&lt;/div&gt;" vertex="1">
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Span Replication Layer&amp;nbsp;&lt;div&gt;(max width = 8, shape [ S,D ])&lt;/div&gt;&lt;div&gt;where s = seq_len * max width&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="195" x="210" y="1090" as="geometry" />
         </mxCell>
         <mxCell id="zV03kIuOqvWoOWJ2pc5r-15" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-8">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="zV03kIuOqvWoOWJ2pc5r-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="CountLSTM&amp;nbsp;&lt;div&gt;(count aware projection)&lt;/div&gt;" vertex="1">
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="CountLSTM&amp;nbsp;&lt;div&gt;(count aware projection)&lt;/div&gt;&lt;div&gt;(shape [ L, K, D ])&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="195" x="490" y="1090" as="geometry" />
         </mxCell>
         <mxCell id="zV03kIuOqvWoOWJ2pc5r-19" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-9">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="zV03kIuOqvWoOWJ2pc5r-8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Logit Generation&amp;nbsp;&lt;div&gt;(einsum(&#39;sd,lkd-&amp;gt;lks&#39;, span_rep, struct_proj))&lt;/div&gt;" vertex="1">
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Logit Generation&amp;nbsp;&lt;div&gt;(einsum(&#39;SD,LKD-&amp;gt;LKS&#39;, span_rep, struct_proj))&lt;/div&gt;" vertex="1">
           <mxGeometry height="60" width="327.5" x="286.25" y="1250" as="geometry" />
         </mxCell>
         <mxCell id="zV03kIuOqvWoOWJ2pc5r-20" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-10">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="zV03kIuOqvWoOWJ2pc5r-9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Output (logits of shape [l, k, s, w])&amp;nbsp;" vertex="1">
-          <mxGeometry height="60" width="195" x="352.5" y="1420" as="geometry" />
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Output&amp;nbsp;&lt;div&gt;shape&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;[ L, K, seq_len, W ]&amp;nbsp;&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="197.5" x="350" y="1420" as="geometry" />
         </mxCell>
-        <mxCell id="zV03kIuOqvWoOWJ2pc5r-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Labels (shape [l, k, s, w])&amp;nbsp;" vertex="1">
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Labels (shape [ L, K, S, W ])&amp;nbsp;" vertex="1">
           <mxGeometry height="60" width="195" x="670" y="1420" as="geometry" />
         </mxCell>
         <mxCell id="zV03kIuOqvWoOWJ2pc5r-21" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fad7ac;strokeColor=#b46504;" value="Splits DeBERTa outputs into text and schema tokens" vertex="1">
           <mxGeometry height="60" width="120" x="613.75" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="sCucj88uzWENY88o_nVd-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fad7ac;strokeColor=#b46504;" value="Parent token [P] is dropped and tensor is reshaped. L is set to 1 for NER task" vertex="1">
+          <mxGeometry height="60" width="210" x="710" y="1090" as="geometry" />
+        </mxCell>
+        <mxCell id="sCucj88uzWENY88o_nVd-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fad7ac;strokeColor=#b46504;" value="Logit is reshaped into l, k, seq_len, w from l, k, s. where w is the max width" vertex="1">
+          <mxGeometry height="60" width="210" x="475" y="1340" as="geometry" />
+        </mxCell>
+        <mxCell id="sCucj88uzWENY88o_nVd-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fad7ac;strokeColor=#b46504;" value="Parent token [P] represents the task while each entity token [E] represents the labels" vertex="1">
+          <mxGeometry height="60" width="265" x="745" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="sCucj88uzWENY88o_nVd-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fad7ac;strokeColor=#b46504;" value="Loss" vertex="1">
+          <mxGeometry height="40" width="70" x="570" y="1430" as="geometry" />
+        </mxCell>
+        <mxCell id="sCucj88uzWENY88o_nVd-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;div class=&quot;markdown-table-wrapper&quot; style=&quot;--fade-start: light-dark(rgba(0,0,0,.25), #ededed40); --fade-end: light-dark(#000, #000000); --markdown-table-fade-width: 10px; mask-image: linear-gradient(to right, rgb(0, 0, 0) calc(100% - 10px), rgba(0, 0, 0, 0.25) 100%); --mask: linear-gradient(to right,#000 calc(100% - 10px),rgba(0,0,0,.25) 100%); color: rgb(212, 212, 212); font-family: &amp;quot;Segoe WPC&amp;quot;, &amp;quot;Segoe UI&amp;quot;, sans-serif; font-size: 13px; text-align: start; background-color: rgb(37, 37, 38); overflow: hidden;&quot;&gt;&lt;table class=&quot;markdown-table&quot; style=&quot;border-collapse: collapse; color: inherit; font-size: inherit;&quot;&gt;&lt;thead&gt;&lt;tr&gt;&lt;th style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); padding: 5px 9px; text-align: left; text-wrap-mode: nowrap;&quot;&gt;Dim&lt;/th&gt;&lt;th style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); padding: 5px 9px; text-align: left; text-wrap-mode: nowrap;&quot;&gt;Meaning&lt;/th&gt;&lt;th style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: none; padding: 5px 9px; text-align: left; text-wrap-mode: nowrap;&quot;&gt;Example&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;&lt;span class=&quot;markdown-inline-code leading-[1.4]&quot; style=&quot;line-height: 1.4; word-break: break-all; font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace, Menlo, Monaco, &amp;quot;Courier New&amp;quot;, monospace; cursor: default; color: inherit;&quot;&gt;L&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;Number of instances&amp;nbsp;(count)&lt;/td&gt;&lt;td style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: none; padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;1 for&amp;nbsp;entities, N&amp;nbsp;for relations&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;&lt;span class=&quot;markdown-inline-code leading-[1.4]&quot; style=&quot;line-height: 1.4; word-break: break-all; font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace, Menlo, Monaco, &amp;quot;Courier New&amp;quot;, monospace; cursor: default; color: inherit;&quot;&gt;K&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;Number of fields/labels&lt;/td&gt;&lt;td style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: none; padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;5 (e.g. &quot;programming&amp;nbsp;language&quot;, &quot;software&amp;nbsp;application&quot;, &quot;platform&quot;, &quot;protocol&quot;, &quot;tool&quot;)&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;&lt;font face=&quot;Consolas, Courier New, monospace, Menlo, Monaco, Courier New, monospace&quot;&gt;seq_len&lt;/font&gt;&lt;/td&gt;&lt;td style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;Number&amp;nbsp;of word&amp;nbsp;tokens in&amp;nbsp;the&amp;nbsp;text&lt;/td&gt;&lt;td style=&quot;border-bottom: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); border-right: none; padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;varies&amp;nbsp;per&amp;nbsp;sample&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot;border-bottom: none; border-right: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;&lt;span class=&quot;markdown-inline-code leading-[1.4]&quot; style=&quot;line-height: 1.4; word-break: break-all; font-family: Consolas, &amp;quot;Courier New&amp;quot;, monospace, Menlo, Monaco, &amp;quot;Courier New&amp;quot;, monospace; cursor: default; color: inherit;&quot;&gt;max_width&lt;/span&gt;&lt;/td&gt;&lt;td style=&quot;border-bottom: none; border-right: 0.8px solid color(srgb 0.8 0.8 0.8 / 0.08); padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;Maximum span&amp;nbsp;width&lt;/td&gt;&lt;td style=&quot;border-bottom: none; border-right: none; padding: 5px 9px; text-wrap-mode: nowrap;&quot;&gt;8 (from&amp;nbsp;config)&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;div role=&quot;presentation&quot; aria-hidden=&quot;true&quot; class=&quot;visible scrollbar horizontal&quot; style=&quot;visibility: visible; background: rgb(37, 37, 38); opacity: 1; transition: opacity 0.1s linear; z-index: 11; color: rgb(212, 212, 212); font-family: &amp;quot;Segoe WPC&amp;quot;, &amp;quot;Segoe UI&amp;quot;, sans-serif; font-size: 13px; text-align: start; position: absolute; width: 423px; height: 10px; left: 0px; bottom: 0px;&quot;&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="130" width="690" x="730" y="585" as="geometry" />
+        </mxCell>
+        <mxCell id="sCucj88uzWENY88o_nVd-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fad7ac;strokeColor=#b46504;" value="Label tensor values are all set to 0 except for the gold spans = 1" vertex="1">
+          <mxGeometry height="60" width="210" x="900" y="1420" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
