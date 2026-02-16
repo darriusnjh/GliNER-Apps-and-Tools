@@ -1,0 +1,75 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36" version="29.4.0">
+  <diagram name="Page-1" id="DzHKaM0tJZQ1xSFMVLwv">
+    <mxGraphModel dx="1123" dy="710" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-18" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="zV03kIuOqvWoOWJ2pc5r-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Input text:&amp;nbsp;( [P] entities ( [E] {label1} [E] {label2} [E] {label3}) ) [SEP_TEXT]&amp;nbsp; {job_description}" vertex="1">
+          <mxGeometry height="60" width="520" x="190" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-17" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="DeBERTa" vertex="1">
+          <mxGeometry height="125" width="190" x="355" y="585" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-11" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-12" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-3" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Embedding Extraction" vertex="1">
+          <mxGeometry height="60" width="195" x="352.5" y="800" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-13" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Text Token Embeddings" vertex="1">
+          <mxGeometry height="60" width="195" x="210" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-14" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-5" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Schema Token Embeddings&amp;nbsp;&lt;div&gt;(shape [ k +1, D ]&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="195" x="490" y="940" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-16" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="1250.0000000000002" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-6" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Span Replication Layer&amp;nbsp;&lt;div&gt;(max width = 8)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="195" x="210" y="1090" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-15" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-7" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="CountLSTM&amp;nbsp;&lt;div&gt;(count aware projection)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="195" x="490" y="1090" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-19" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-8" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Logit Generation&amp;nbsp;&lt;div&gt;(einsum(&#39;sd,lkd-&amp;gt;lks&#39;, span_rep, struct_proj))&lt;/div&gt;" vertex="1">
+          <mxGeometry height="60" width="327.5" x="286.25" y="1250" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-20" edge="1" parent="1" source="zV03kIuOqvWoOWJ2pc5r-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="zV03kIuOqvWoOWJ2pc5r-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-9" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Output (logits of shape [l, k, s, w])&amp;nbsp;" vertex="1">
+          <mxGeometry height="60" width="195" x="352.5" y="1420" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Labels (shape [l, k, s, w])&amp;nbsp;" vertex="1">
+          <mxGeometry height="60" width="195" x="670" y="1420" as="geometry" />
+        </mxCell>
+        <mxCell id="zV03kIuOqvWoOWJ2pc5r-21" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fad7ac;strokeColor=#b46504;" value="Splits DeBERTa outputs into text and schema tokens" vertex="1">
+          <mxGeometry height="60" width="120" x="613.75" y="800" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
