@@ -49,6 +49,10 @@ def parse_args():
         help="Base model to fine-tune (default: fastino/gliner2-base-v1)"
     )
     parser.add_argument(
+        "--resume-adapter", type=str, default=None,
+        help="Path to a previous LoRA adapter to merge before training (continues from previous fine-tune)"
+    )
+    parser.add_argument(
         "--output", type=str, default="./tech_tools_model",
         help="Output directory for the fine-tuned model (default: ./tech_tools_model)"
     )
@@ -169,6 +173,13 @@ def main():
     # Load base model
     print(f"Loading base model: {args.base_model}...")
     model = Extractor.from_pretrained(args.base_model)
+
+    # Optionally load and merge a previous adapter to continue training
+    if args.resume_adapter:
+        print(f"Loading previous adapter: {args.resume_adapter}...")
+        model.load_adapter(args.resume_adapter)
+        model.merge_lora()
+        print("Merged previous adapter into base model. Fresh LoRA will be applied on top.")
 
     # Create training configuration from CLI arguments
     use_lora = not args.no_lora
